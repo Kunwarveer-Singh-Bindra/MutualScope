@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+
+{% block title %}MutualScope | Compare Funds{% endblock %}
+
+{% block content %}
+{% macro num(x) -%}
+    {%- if x is number -%}{{ "%.2f"|format(x) }}{%- elif x is not none and x != "" -%}{{ x }}{%- else -%}N/A{%- endif -%}
+{%- endmacro %}
+
+{% macro pct(x) -%}
+    {%- if x is number -%}{{ "%.2f%%"|format(x * 100) }}{%- else -%}N/A{%- endif -%}
+{%- endmacro %}
+
+{% set payload = compare_data.get('data', compare_data) if compare_data is mapping else compare_data %}
+{% set fund_a = none %}
+{% set fund_b = none %}
+
+{% if payload is mapping and payload.get('fund_1') and payload.get('fund_2') %}
+    {% set fund_a = payload.get('fund_1') %}
+    {% set fund_b = payload.get('fund_2') %}
+{% elif payload is sequence and payload is not string and payload|length >= 2 %}
+    {% set fund_a = payload[0] %}
+    {% set fund_b = payload[1] %}
+{% endif %}
+
+{% set a_metrics = fund_a.get('metrics', fund_a) if fund_a is mapping else {} %}
+{% set b_metrics = fund_b.get('metrics', fund_b) if fund_b is mapping else {} %}
+{% set a_nav = a_metrics.get('latest_nav') if a_metrics.get('latest_nav') is not none else a_metrics.get('nav') %}
+{% set b_nav = b_metrics.get('latest_nav') if b_metrics.get('latest_nav') is not none else b_metrics.get('nav') %}
+
+<section class="dashboard-layout">
+    <article class="card">
+        <p class="eyebrow">Fund Comparison</p>
+        <h1 style="margin-top:0.5rem; margin-bottom:0.8rem;">Compare Two Mutual Funds</h1>
+        <form class="compare-form" method="post" action="{{ url_for('compare_funds') }}">
+            <div class="compare-input-group">
+                <label for="scheme_code_1">Fund 1</label>
+                <input id="scheme_code_1" name="scheme_code_1" type="text" inputmode="numeric" placeholder="e.g., 120503" value="{{ code1|default('', true) }}" autocomplete="off">
+            </div>
+
+            <button id="swapCompareCodes" class="swap-btn" type="button" aria-label="Swap fund codes" title="Swap fund codes">Swap</button>
+
+            <div class="compare-input-group">
+                <label for="scheme_code_2">Fund 2</label>
+                <input id="scheme_code_2" name="scheme_code_2" type="text" inputmode="numeric" placeholder="e.g., 122640" value="{{ code2|default('', true) }}" autocomplete="off">
+            </div>
+
+            <button class="compare-submit" type="submit">Compare</button>
+        </form>
+        <p class="news-meta" style="margin-top:0.55rem;">Tip: Enter numeric scheme codes only for fastest results.</p>
+        {% if error %}
+        <p class="error-banner">{{ error }}</p>
+        {% endif %}
+    </article>
+
+    {% if fund_a is mapping and fund_b is mapping %}
+    <section class="compare-grid">
+        <article class="card">
+            <div class="section-head"><h3>{{ fund_a.get('fund_name') or fund_a.get('scheme_name') or ('Scheme ' ~ (code1|default('1'))) }}</h3></div>
+            <div class="holdings-table">
+                <div class="holding-row"><span>Scheme Code</span><strong>{{ fund_a.get('scheme_code') or code1|default('N/A') }}</strong></div>
+                <div class="holding-row"><span>Category</span><strong>{{ fund_a.get('category') or fund_a.get('scheme_type') or 'N/A' }}</strong></div>
+                <div class="holding-row"><span>Latest NAV</span><strong>{{ num(a_nav) }}</strong></div>
+                <div class="holding-row"><span>CAGR</span><strong>{{ pct(a_metrics.get('cagr')) }}</strong></div>
+                <div class="holding-row"><span>Volatility</span><strong>{{ pct(a_metrics.get('volatility')) }}</strong></div>
+                <div class="holding-row"><span>Sharpe</span><strong>{{ num(a_metrics.get('sharpe')) }}</strong></div>
+                <div class="holding-row"><span>Max Drawdown</span><strong>{{ pct(a_metrics.get('max_drawdown')) }}</strong></div>
+            </div>
+        </article>
+
+        <article class="card">
+            <div class="section-head"><h3>{{ fund_b.get('fund_name') or fund_b.get('scheme_name') or ('Scheme ' ~ (code2|default('2'))) }}</h3></div>
+            <div class="holdings-table">
+                <div class="holding-row"><span>Scheme Code</span><strong>{{ fund_b.get('scheme_code') or code2|default('N/A') }}</strong></div>
+                <div class="holding-row"><span>Category</span><strong>{{ fund_b.get('category') or fund_b.get('scheme_type') or 'N/A' }}</strong></div>
+                <div class="holding-row"><span>Latest NAV</span><strong>{{ num(b_nav) }}</strong></div>
+                <div class="holding-row"><span>CAGR</span><strong>{{ pct(b_metrics.get('cagr')) }}</strong></div>
+                <div class="holding-row"><span>Volatility</span><strong>{{ pct(b_metrics.get('volatility')) }}</strong></div>
+                <div class="holding-row"><span>Sharpe</span><strong>{{ num(b_metrics.get('sharpe')) }}</strong></div>
+                <div class="holding-row"><span>Max Drawdown</span><strong>{{ pct(b_metrics.get('max_drawdown')) }}</strong></div>
+            </div>
+        </article>
+    </section>
+
+    <article class="card">
+        <div class="section-head"><h3>Quick Metric Comparison</h3></div>
+        <div class="compare-table">
+            <div class="table-row"><span class="metric-name">Latest NAV</span><span class="metric-left">{{ num(a_nav) }}</span><span class="metric-right">{{ num(b_nav) }}</span></div>
+            <div class="table-row"><span class="metric-name">CAGR</span><span class="metric-left">{{ pct(a_metrics.get('cagr')) }}</span><span class="metric-right">{{ pct(b_metrics.get('cagr')) }}</span></div>
+            <div class="table-row"><span class="metric-name">Volatility</span><span class="metric-left">{{ pct(a_metrics.get('volatility')) }}</span><span class="metric-right">{{ pct(b_metrics.get('volatility')) }}</span></div>
+            <div class="table-row"><span class="metric-name">Sharpe Ratio</span><span class="metric-left">{{ num(a_metrics.get('sharpe')) }}</span><span class="metric-right">{{ num(b_metrics.get('sharpe')) }}</span></div>
+            <div class="table-row"><span class="metric-name">Max Drawdown</span><span class="metric-left">{{ pct(a_metrics.get('max_drawdown')) }}</span><span class="metric-right">{{ pct(b_metrics.get('max_drawdown')) }}</span></div>
+        </div>
+    </article>
+
+    {% if charts_a is defined and charts_b is defined and charts_a and charts_b %}
+    <section class="compare-charts">
+        <article class="card">
+            <div class="section-head"><h3>NAV Trend Comparison</h3></div>
+            <div class="chart-two-col">
+                <div class="chart-box">{{ charts_a.get('nav', '<p>Data unavailable</p>')|safe }}</div>
+                <div class="chart-box">{{ charts_b.get('nav', '<p>Data unavailable</p>')|safe }}</div>
+            </div>
+        </article>
+
+        <article class="card">
+            <div class="section-head"><h3>Drawdown Comparison</h3></div>
+            <div class="chart-two-col">
+                <div class="chart-box">{{ charts_a.get('drawdown', '<p>Data unavailable</p>')|safe }}</div>
+                <div class="chart-box">{{ charts_b.get('drawdown', '<p>Data unavailable</p>')|safe }}</div>
+            </div>
+        </article>
+
+        <article class="card">
+            <div class="section-head"><h3>Sector Allocation Comparison</h3></div>
+            <div class="chart-two-col">
+                <div class="chart-box">{{ charts_a.get('sector', '<p>Data unavailable</p>')|safe }}</div>
+                <div class="chart-box">{{ charts_b.get('sector', '<p>Data unavailable</p>')|safe }}</div>
+            </div>
+        </article>
+    </section>
+    {% endif %}
+    {% endif %}
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const swapButton = document.getElementById("swapCompareCodes");
+    if (swapButton) {
+        swapButton.addEventListener("click", () => {
+            const a = document.getElementById("scheme_code_1");
+            const b = document.getElementById("scheme_code_2");
+            if (!a || !b) return;
+            const temp = a.value;
+            a.value = b.value;
+            b.value = temp;
+            a.focus();
+        });
+    }
+</script>
+{% endblock %}
+

@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}MutualScope | Analyze Mutual Funds{% endblock %}
+
+{% block content %}
+<section class="hero-page">
+    <article class="card hero-main">
+        <p class="eyebrow">Real-Time Market Intelligence</p>
+        <h1>
+            Analyze Mutual Funds<br>
+            <span class="accent">Like a Pro.</span>
+        </h1>
+        <p class="hero-subtext">
+            Enter a scheme code or fund name to unlock performance analytics, risk metrics,
+            holdings, sector allocation, and AI-powered insights.
+        </p>
+
+        <div class="search-panel">
+            <form class="search-form" method="post" action="{{ url_for('home') }}">
+                <label for="scheme_code" class="sr-only">Scheme code or fund name</label>
+                <input
+                    id="scheme_code"
+                    name="scheme_code"
+                    type="text"
+                    autocomplete="off"
+                    placeholder="Search scheme code or fund name (e.g., 120503 or HDFC)"
+                >
+                <button type="submit">Analyze</button>
+            </form>
+
+            {% if results %}
+            <div class="search-results" id="search_results">
+                {% for fund in results %}
+                <div class="result-item" onclick="window.location.href='{{ url_for('fund', scheme_code=fund.scheme_code) }}'">
+                    {{ fund.scheme_name }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% if error %}
+            <p class="error-banner">{{ error }}</p>
+            {% endif %}
+        </div>
+    </article>
+
+    <section class="feature-grid">
+        <article class="feature-item">
+            <span class="feature-dot"></span>
+            <div>
+                <h3>Data-Driven Precision</h3>
+                <p>Fund facts, NAV history, holdings, and calculated risk metrics in one place.</p>
+            </div>
+        </article>
+        <article class="feature-item">
+            <span class="feature-dot"></span>
+            <div>
+                <h3>AI Insight Layer</h3>
+                <p>Understand if return potential justifies risk with plain-language analyst notes.</p>
+            </div>
+        </article>
+    </section>
+</section>
+{% endblock %}

@@ -1,0 +1,6 @@
+.env
+.venv/
+.venv311/
+__pycache__/
+.idea/
+web/static/charts/

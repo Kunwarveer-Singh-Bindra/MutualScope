@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block title %}MutualScope | Fund Dashboard{% endblock %}
+
+{% block content %}
+{% set metric_data = metrics if metrics is defined else {} %}
+{% set resolved_scheme_code = scheme_code|default(metric_data.get('scheme_code', 'N/A')) %}
+
+{% macro render_news_list(news_items, empty_message) %}
+    {% if news_items %}
+    <div class="news-list">
+        {% for news in news_items %}
+        {% set source_raw = news.source if news.source is defined else none %}
+        {% if source_raw is mapping %}
+            {% set source_label = source_raw.get('name') or source_raw.get('title') or 'Unknown source' %}
+        {% else %}
+            {% set source_label = source_raw|default('Unknown source', true) %}
+        {% endif %}
+        <article class="news-item">
+            <a href="{{ news.link|default('#') }}" target="_blank" rel="noopener noreferrer">
+                {{ news.title|default('Untitled news item', true) }}
+            </a>
+            <p class="news-meta">
+                <span>{{ source_label }}</span>
+                <span>&bull;</span>
+                <span>{{ news.published_at|default('Recent', true) }}</span>
+            </p>
+        </article>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="news-meta">{{ empty_message }}</p>
+    {% endif %}
+{% endmacro %}
+
+<section class="dashboard-layout">
+    <section class="fund-top">
+        <article class="card fund-title">
+            <p class="eyebrow">Fund Analytics Dashboard</p>
+            <h1>{{ metric_data.get('fund_name', 'Mutual Fund') }}</h1>
+            <p class="fund-meta">
+                <span>Scheme Code: <strong>{{ resolved_scheme_code }}</strong></span>
+                <span>Category: <strong>{{ metric_data.get('category', 'N/A') }}</strong></span>
+            </p>
+        </article>
+        <article class="card stat-box">
+            <p>Latest NAV</p>
+            <h2>{{ metric_data.get('latest_nav', 'N/A') }}</h2>
+        </article>
+    </section>
+
+    <article class="card">
+        <div class="section-head">
+            <h3>Net Asset Value Performance</h3>
+        </div>
+        <div class="chart-frame">
+            {{ nav_chart|safe }}
+        </div>
+    </article>
+
+    <section class="split-two">
+        <article class="card">
+            <div class="section-head"><h3>Sector Allocation</h3></div>
+            <div class="chart-frame">{{ sector_chart|safe }}</div>
+        </article>
+        <article class="card">
+            <div class="section-head"><h3>Drawdown</h3></div>
+            <div class="chart-frame">{{ drawdown_chart|safe }}</div>
+        </article>
+    </section>
+
+    <section class="metrics-grid">
+        <article class="metric-card">
+            <p class="metric-label">CAGR</p>
+            <p class="metric-value">{{ '%.2f%%'|format((metric_data.get('cagr', 0) * 100)) }}</p>
+        </article>
+        <article class="metric-card">
+            <p class="metric-label">Volatility</p>
+            <p class="metric-value">{{ '%.2f%%'|format((metric_data.get('volatility', 0) * 100)) }}</p>
+        </article>
+        <article class="metric-card">
+            <p class="metric-label">Sharpe Ratio</p>
+            <p class="metric-value">{{ '%.2f'|format(metric_data.get('sharpe', 0)) }}</p>
+        </article>
+        <article class="metric-card">
+            <p class="metric-label">Max Drawdown</p>
+            <p class="metric-value">{{ '%.2f%%'|format((metric_data.get('max_drawdown', 0) * 100)) }}</p>
+        </article>
+    </section>
+
+    <section class="split-two">
+        <article class="card">
+            <div class="section-head"><h3>Top Holdings</h3></div>
+            {% if holdings and holdings|length > 0 %}
+            <div class="holdings-table">
+                {% for h in holdings[:10] %}
+                {% set stock_name = h.get('stock_name') or h.get('company_name') or h.get('instrument_name') or h.get('name') or 'N/A' %}
+                {% set stock_weight = h.get('weight_pct') if h.get('weight_pct') is not none else (h.get('assets_percent') or h.get('holding_percent') or h.get('percentage_to_nav') or 0) %}
+                <div class="holding-row">
+                    <span>{{ stock_name }}</span>
+                    <strong>{{ '%.2f'|format(stock_weight|float) }}%</strong>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="news-meta">No holdings data available for this fund.</p>
+            {% endif %}
+        </article>
+        <article class="card">
+            <div class="section-head"><h3>AI Analyst Insight</h3></div>
+            <p>{{ analyst_note|default('AI insight will appear here once analysis is available.') }}</p>
+        </article>
+    </section>
+
+    <section class="news-grid">
+        <article class="card">
+            <div class="section-head"><h3>Fund News</h3></div>
+            {{ render_news_list(fund_news, 'No fund-specific news available right now.') }}
+        </article>
+        <article class="card">
+            <div class="section-head"><h3>Indian Market News</h3></div>
+            {{ render_news_list(indian_news, 'No Indian market news available right now.') }}
+        </article>
+        <article class="card">
+            <div class="section-head"><h3>Global Market News</h3></div>
+            {{ render_news_list(global_news, 'No global market news available right now.') }}
+        </article>
+    </section>
+</section>
+{% endblock %}
