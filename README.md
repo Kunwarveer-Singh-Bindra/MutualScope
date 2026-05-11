@@ -12,6 +12,7 @@ Inspired by modern investing platforms, MutualScope delivers a clean, data-rich 
 - **Visual Dashboards**: Interactive NAV charts, sector allocation donuts, and drawdown visualization.
 - **Live Holdings & Market Intel**: Fetches real-time equity/debt holdings, credit ratings, and curated market news.
 - **Modern Fintech UI**: A sleek, dark-themed responsive UI built with Tailwind CSS, featuring glassmorphism and bento-grid layouts.
+- **Dockerized Deployment**: Separate Docker containers for the API and Web services for easy, reproducible deployments.
 
 ## 📂 Project Structure
 
@@ -19,20 +20,25 @@ Inspired by modern investing platforms, MutualScope delivers a clean, data-rich 
 mutualscope/
 ├── analytics/           # Financial metric calculations (CAGR, Sharpe, Drawdown)
 │   └── metrics.py
-├── api/                 # API routes and data serving endpoints
+├── api/                 # FastAPI backend serving JSON endpoints
 │   └── main.py
 ├── data/                # Data ingestion pipelines
 │   ├── fetcher.py       # Core fund data fetcher (mFdata API integration)
 │   ├── holdings.py      # Extracts and processes fund portfolio holdings
 │   └── news.py          # Fetches related financial news
-├── llm/                 # AI Analyst integration
+├── llm/                 # AI Analyst integration (Gemini)
 │   └── analyst.py
 ├── src/                 # Visualization generators
 │   └── charts.py        # Generates NAV, Drawdown, and Sector graphs
-├── web/                 # Web application (Flask)
+├── web/                 # Web application (Flask frontend)
 │   ├── app.py           # Main web server
 │   ├── static/          # Styles, scripts, and generated chart images
 │   └── templates/       # HTML templates (index, fund, compare, base)
+├── Dockerfile.api       # Docker config for the FastAPI backend
+├── Dockerfile.web       # Docker config for the Flask web frontend
+├── .dockerignore        # Files excluded from Docker builds
+├── .env.example         # Template for required environment variables
+├── requirements.txt     # Python dependencies
 └── README.md
 ```
 
@@ -40,30 +46,60 @@ mutualscope/
 
 ### Prerequisites
 - Python 3.10+
-- (Optional) Virtual environment recommended
+- Docker (optional, for containerized deployment)
 
-### Installation
+### Environment Setup
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/your-username/mutualscope.git
-   cd mutualscope
+   git clone https://github.com/Kunwarveer-Singh-Bindra/MutualScope.git
+   cd MutualScope
    ```
 
-2. **Install dependencies:**
-   *(Ensure you create and activate a virtual environment first)*
+2. **Create your environment file:**
    ```bash
+   cp .env.example .env
+   ```
+   Fill in your API keys in `.env`:
+   - `GEMINI_KEY` — Google Gemini API key (for AI analyst)
+   - `SERP_API_KEY` — SerpAPI key (for market news)
+   - `SERP_API_ENDPOINT` — SerpAPI endpoint URL
+
+3. **Install dependencies:**
+   ```bash
+   python -m venv .venv
+   .venv\Scripts\activate        # Windows
+   # source .venv/bin/activate   # Linux/Mac
    pip install -r requirements.txt
    ```
-   *(Note: Ensure you have Flask, Pandas, Matplotlib, and other required libraries installed depending on your specific requirements file).*
 
-3. **Run the Application:**
-   ```bash
-   python web/app.py
-   ```
+### Running Locally
 
-4. **Access the platform:**
-   Open your browser and navigate to `http://localhost:5000` (or the port specified by your web runner).
+**API server (FastAPI):**
+```bash
+uvicorn api.main:app --host 0.0.0.0 --port 8000
+```
+Access the API at `http://localhost:8000`
+
+**Web frontend (Flask):**
+```bash
+python web/app.py
+```
+Access the UI at `http://localhost:5000`
+
+### Running with Docker
+
+**Build and run the API:**
+```bash
+docker build -f Dockerfile.api -t mutualscope-api .
+docker run -p 8000:8000 --env-file .env mutualscope-api
+```
+
+**Build and run the Web frontend:**
+```bash
+docker build -f Dockerfile.web -t mutualscope-web .
+docker run -p 5000:5000 --env-file .env mutualscope-web
+```
 
 ## 🛠️ Usage
 - **Search:** Enter a mutual fund scheme code (e.g., `120503`) on the landing page to load the dashboard.
@@ -75,4 +111,3 @@ Contributions, issues, and feature requests are welcome!
 
 ## 📜 License
 This project is licensed under the MIT License.
-
