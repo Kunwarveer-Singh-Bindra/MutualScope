@@ -17,11 +17,26 @@
         <nav class="nav-links" aria-label="Primary navigation">
             <a href="{{ url_for('home') }}" class="nav-link {% if request.path == '/' %}active{% endif %}">Home</a>
             <a href="{{ url_for('compare_funds') }}" class="nav-link {% if request.path.startswith('/compare') %}active{% endif %}">Compare</a>
+            {% if current_user.is_authenticated %}
+            <span class="nav-user">{{ current_user.username }}</span>
+            <a href="{{ url_for('auth.logout') }}" class="nav-link nav-link--logout">Logout</a>
+            {% else %}
+            <a href="{{ url_for('auth.login') }}" class="nav-link nav-link--login {% if request.path == '/login' %}active{% endif %}">Login</a>
+            {% endif %}
         </nav>
     </div>
 </header>
 
 <main class="container page-content">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="flash-container flash-container--global">
+        {% for category, message in messages %}
+        <div class="flash-msg flash-{{ category }}">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
     {% block content %}{% endblock %}
 </main>
 

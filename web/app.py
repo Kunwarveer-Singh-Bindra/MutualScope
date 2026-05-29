@@ -1,11 +1,30 @@
+import sys, os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
 from flask import Flask, render_template, request, redirect, url_for
 import requests
 from src.charts import generate_nav_chart, generate_drawdown_chart, generate_sector_chart
 from data.news import get_global_market_news, get_fund_news, get_indian_market_news
+import os
+from flask_login import LoginManager, login_required
+from auth.routes import auth_bp
+from auth.models import User
+from auth.db import init_db
+
 app = Flask(__name__)
+
+app.secret_key = os.getenv("FLASK_SECRET_KEY", "dev-secret-key")
+login_manager = LoginManager(app)
+login_manager.login_view = "auth.login"
+@login_manager.user_loader
+def load_user(user_id):
+    return User.get_by_id(int(user_id))
+app.register_blueprint(auth_bp)
+init_db()
 
 
 @app.route('/', methods=['GET', 'POST'])
+@login_required
 def home():
     if request.method == 'POST':
         query = request.form.get('scheme_code')
@@ -25,6 +44,7 @@ def home():
     return render_template("index.html")
 
 @app.route('/fund/<int:scheme_code>')
+@login_required
 def fund(scheme_code):
     url = f"http://127.0.0.1:8000/metrics/{scheme_code}"
     response = requests.get(url)
@@ -60,6 +80,7 @@ def fund(scheme_code):
     )
 
 @app.route('/compare', methods=['GET', 'POST'])
+@login_required
 def compare_funds():
     if request.method == 'POST':
         code1 = request.form.get("scheme_code_1", "").strip()
