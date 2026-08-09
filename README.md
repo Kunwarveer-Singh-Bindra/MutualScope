@@ -101,6 +101,32 @@ docker build -f Dockerfile.web -t mutualscope-web .
 docker run -p 5000:5000 --env-file .env mutualscope-web
 ```
 
+## Production Deployment with GitHub Actions
+
+This repository now includes a GitHub Actions workflow that deploys the app to a VPS over SSH.
+
+### Flow
+
+1. Push to `main` triggers `.github/workflows/deploy.yml`.
+2. The workflow SSHes into the server, updates the checked-out repo, and runs `docker compose -f docker-compose.prod.yml up -d --build`.
+3. The compose stack starts MySQL, the FastAPI service, and the Flask web app.
+
+### Server requirements
+
+1. Docker and Docker Compose installed.
+2. The repository cloned on the server at `/opt/mutualscope`.
+3. A production `.env` file in that directory with `MYSQL_ROOT_PASSWORD`, `MYSQL_USER`, `MYSQL_PASSWORD`, `MYSQL_DB`, `FLASK_SECRET_KEY`, `GEMINI_KEY`, `SERP_API_KEY`, and `SERP_API_ENDPOINT`.
+
+### GitHub secrets
+
+1. `VPS_HOST`
+2. `VPS_USER`
+3. `VPS_SSH_KEY`
+
+### Important production note
+
+The Flask app now reads `API_BASE_URL` from the environment. In `docker-compose.prod.yml` it is set to `http://api:8000`, so the web container talks to the API container on the internal Docker network instead of `127.0.0.1`.
+
 ## 🛠️ Usage
 - **Search:** Enter a mutual fund scheme code (e.g., `120503`) on the landing page to load the dashboard.
 - **Analyze:** Review the AI insights, historical risk metrics, and top asset holdings on the fund page.

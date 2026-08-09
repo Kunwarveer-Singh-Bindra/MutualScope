@@ -14,6 +14,7 @@ from auth.db import init_db
 app = Flask(__name__)
 
 app.secret_key = os.getenv("FLASK_SECRET_KEY", "dev-secret-key")
+API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:8000").rstrip("/")
 login_manager = LoginManager(app)
 login_manager.login_view = "auth.login"
 @login_manager.user_loader
@@ -34,7 +35,7 @@ def home():
 
         if query:
             # call FastAPI search
-            url = f"http://127.0.0.1:8000/search?query={query}"
+            url = f"{API_BASE_URL}/search?query={query}"
             response = requests.get(url)
 
             results = response.json() if response.status_code == 200 else []
@@ -46,7 +47,7 @@ def home():
 @app.route('/fund/<int:scheme_code>')
 @login_required
 def fund(scheme_code):
-    url = f"http://127.0.0.1:8000/metrics/{scheme_code}"
+    url = f"{API_BASE_URL}/metrics/{scheme_code}"
     response = requests.get(url)
     if response.status_code != 200:
         return "Error fetching data from API"
@@ -102,7 +103,7 @@ def compare_funds():
         if not (code1.isdigit() and code2.isdigit()):
             return render_template("compare.html", error="Enter valid numeric scheme codes.")
 
-        url = f"http://127.0.0.1:8000/compare?scheme_code_1={code1}&scheme_code_2={code2}"
+        url = f"{API_BASE_URL}/compare?scheme_code_1={code1}&scheme_code_2={code2}"
         response = requests.get(url)
         payload = response.json() if response.status_code == 200 else {}
 
