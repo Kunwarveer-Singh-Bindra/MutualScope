@@ -11,10 +11,10 @@ def get_db_connection():
     Always close it after use with conn.close()
     """
     return mysql.connector.connect(
-        host=os.getenv("MYSQL_HOST", "localhost"),
-        user=os.getenv("MYSQL_USER", "root"),
-        password=os.getenv("MYSQL_PASSWORD", ""),
-        database=os.getenv("MYSQL_DB", "mutualscope_db")
+        host=os.getenv("MYSQL_HOST", os.getenv("MYSQLHOST", "localhost")),
+        user=os.getenv("MYSQL_USER", os.getenv("MYSQLUSER", "root")),
+        password=os.getenv("MYSQL_PASSWORD", os.getenv("MYSQLPASSWORD", "")),
+        database=os.getenv("MYSQL_DB", os.getenv("MYSQLDATABASE", "mutualscope_db"))
     )
 
 
