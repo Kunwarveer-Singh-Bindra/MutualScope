@@ -48,7 +48,7 @@ def home():
 @login_required
 def fund(scheme_code):
     url = f"{API_BASE_URL}/metrics/{scheme_code}"
-    response = requests.get(url)
+    response = requests.get(url, timeout=120)
     if response.status_code != 200:
         return "Error fetching data from API"
 
