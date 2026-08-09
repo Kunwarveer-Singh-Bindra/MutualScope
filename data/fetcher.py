@@ -4,7 +4,7 @@ import pandas as pd
 
 def get_all_funds():
     amfi_url = "https://www.amfiindia.com/spages/NAVAll.txt"
-    response = requests.get(amfi_url, timeout=10)
+    response = requests.get(amfi_url, timeout=60)
 
     if response.status_code == 200:
         data = response.text
@@ -35,7 +35,7 @@ def build_dataframe(raw_data: str):
 
 def get_nav_history(scheme_code: int):
     mfapi_url = f"https://api.mfapi.in/mf/{scheme_code}"
-    response = requests.get(mfapi_url, timeout=10)
+    response = requests.get(mfapi_url, timeout=60)
     if response.status_code == 200:
         data = response.json()
         if "data" in data:
